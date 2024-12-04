@@ -4,6 +4,8 @@ from PIL import Image
 import os
 import uuid
 from cloudinary.models import CloudinaryField
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 
 class FoundID(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -12,14 +14,14 @@ class FoundID(models.Model):
     extracted_text = models.TextField(blank=True, null=True)
     posted_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        if self.image and not self.image_absolute_url:
-            self.image_absolute_url = self.image.url 
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return f"Image - {self.image_absolute_url if self.image_absolute_url else 'No Image'}"
 
+@receiver(post_save, sender=FoundID)
+def update_image_url(sender, instance, **kwargs):
+    if instance.image and not instance.image_absolute_url:
+        instance.image_absolute_url = instance.image.url
+        instance.save()
 class Message(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     found_id = models.ForeignKey(FoundID, related_name='messages', on_delete=models.CASCADE)
