@@ -18,17 +18,35 @@ class FoundIDDetailView(RetrieveAPIView):
     serializer_class = FoundIDSerializer
     lookup_field = "id" 
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import FoundID
+from .serializers import FoundIDSerializer
+import requests
+from io import BytesIO
+from PIL import Image
+
 class PostFoundID(APIView):
     def post(self, request):
-
+        # Get the uploaded image
         image = request.FILES.get('image')
         if not image:
             return Response({"error": "Image file is required"}, status=status.HTTP_400_BAD_REQUEST)
-
         found_id = FoundID.objects.create(image=image)
 
         image_url = found_id.image.url
-        found_id.extracted_text = extract_text_from_image(image_url)
+
+        try:
+            response = requests.get(image_url, stream=True)
+            response.raise_for_status() 
+            img = Image.open(BytesIO(response.content))
+        except requests.exceptions.RequestException as e:
+            return Response({"error": f"Failed to fetch the image: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({"error": f"Failed to open the image: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        found_id.extracted_text = extract_text_from_image(img) 
         found_id.save()
 
         # Serialize the response
@@ -37,6 +55,7 @@ class PostFoundID(APIView):
         response_data["message_link"] = f"/messages/{found_id.id}/"
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
 class SearchLostID(APIView):
     def get(self, request):
         query = request.query_params.get('q', '')
