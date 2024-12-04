@@ -8,14 +8,17 @@ from cloudinary.models import CloudinaryField
 class FoundID(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     image = CloudinaryField('image')
+    image_absolute_url = models.URLField(max_length=500, blank=True, null=True)  # Field to store absolute URL
     extracted_text = models.TextField(blank=True, null=True)
     posted_at = models.DateTimeField(auto_now_add=True)
 
-    def image_url(self):
-        return self.image if self.image else None
+    def save(self, *args, **kwargs):
+        if self.image and not self.image_absolute_url:
+            self.image_absolute_url = self.image.url 
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Image - {self.image if self.image else 'No Image'}"
+        return f"Image - {self.image_absolute_url if self.image_absolute_url else 'No Image'}"
 
 class Message(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -29,7 +29,7 @@ class PostFoundID(APIView):
 
         found_id = FoundID.objects.create(image=image)
 
-        image_url = found_id.image
+        image_url = found_id.image_absolute_url
         print(image_url)
 
         response = requests.get(image_url)
