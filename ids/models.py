@@ -7,16 +7,12 @@ import uuid
 class FoundID(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     image = models.ImageField(upload_to='found_ids/')
-    thumbnail = models.ImageField(upload_to='found_ids/thumbnails/', editable=False, blank=True, null=True)
     extracted_text = models.TextField(blank=True, null=True)
     posted_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-    
-
     def image_url(self):
-        return f"{settings.MEDIA_URL}{self.image.url}" if self.image else None
+        # Returns the full URL of the image
+        return self.image.url if self.image else None
 
     def __str__(self):
         return f"Image - {self.image}"

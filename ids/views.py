@@ -20,15 +20,18 @@ class FoundIDDetailView(RetrieveAPIView):
 
 class PostFoundID(APIView):
     def post(self, request):
+
         image = request.FILES.get('image')
         if not image:
             return Response({"error": "Image file is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         found_id = FoundID.objects.create(image=image)
 
-        found_id.extracted_text = extract_text_from_image(found_id.image.path)
+        image_url = found_id.image.url
+        found_id.extracted_text = extract_text_from_image(image_url)
         found_id.save()
 
+        # Serialize the response
         serializer = FoundIDSerializer(found_id, context={'request': request})
         response_data = serializer.data
         response_data["message_link"] = f"/messages/{found_id.id}/"
