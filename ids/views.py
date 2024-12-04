@@ -8,6 +8,8 @@ from .models import FoundID, Message
 from .serializers import FoundIDSerializer, MessageSerializer
 from .utils import extract_text_from_image
 from rest_framework.parsers import MultiPartParser, FormParser
+from io import BytesIO
+from PIL import Image
 
 class FoundIDListView(ListAPIView):
     queryset = FoundID.objects.all()
@@ -18,44 +20,32 @@ class FoundIDDetailView(RetrieveAPIView):
     serializer_class = FoundIDSerializer
     lookup_field = "id" 
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import FoundID
-from .serializers import FoundIDSerializer
-import requests
-from io import BytesIO
-from PIL import Image
-
 class PostFoundID(APIView):
     def post(self, request):
-        # Get the uploaded image
         image = request.FILES.get('image')
         if not image:
             return Response({"error": "Image file is required"}, status=status.HTTP_400_BAD_REQUEST)
+
         found_id = FoundID.objects.create(image=image)
 
         image_url = found_id.image.url
+        print(image_url)
 
-        try:
-            response = requests.get(image_url, stream=True)
-            response.raise_for_status() 
-            img = Image.open(BytesIO(response.content))
-        except requests.exceptions.RequestException as e:
-            return Response({"error": f"Failed to fetch the image: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as e:
-            return Response({"error": f"Failed to open the image: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        response = requests.get(image_url)
+        if response.status_code != 200:
+            return Response({"error": "Failed to fetch the image from Cloudinary"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        found_id.extracted_text = extract_text_from_image(img) 
+        image_file = BytesIO(response.content)
+        pil_image = Image.open(image_file)
+
+        found_id.extracted_text = extract_text_from_image(pil_image)
         found_id.save()
 
-        # Serialize the response
         serializer = FoundIDSerializer(found_id, context={'request': request})
         response_data = serializer.data
         response_data["message_link"] = f"/messages/{found_id.id}/"
 
         return Response(response_data, status=status.HTTP_201_CREATED)
-
 class SearchLostID(APIView):
     def get(self, request):
         query = request.query_params.get('q', '')
