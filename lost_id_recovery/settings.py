@@ -23,6 +23,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
+import cloudinary
+
+# Configure Cloudinary with the CLOUDINARY_URL
+cloudinary.config(
+    cloud_name="dffjp2pgt",
+    api_key="927995989226136",
+    api_secret="XYfZHOlpDsQ5Lv-ZvD70Zkgn0Pw",
+)
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-$&#+e!o9tl75lve6z7dfeli_3(3hr7@hcr9()n1&ji(44ydq@h'
 
@@ -48,6 +57,7 @@ INSTALLED_APPS = [
     'cloudinary',
     'cloudinary_storage',
 ]
+
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
