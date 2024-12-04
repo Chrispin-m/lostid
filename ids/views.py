@@ -36,8 +36,12 @@ class PostFoundID(APIView):
         if response.status_code != 200:
             return Response({"error": "Failed to fetch the image from Cloudinary"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        image_file = BytesIO(response.content)
-        pil_image = Image.open(image_file)
+        if response.status_code == 200 and "image" in response.headers.get("Content-Type", ""):
+            image_file = BytesIO(response.content)
+            image_file.seek(0) 
+            pil_image = Image.open(image_file)
+        else:
+            return Response({"error": "Invalid image content from Cloudinary"}, status=status.HTTP_400_BAD_REQUEST)
 
         found_id.extracted_text = extract_text_from_image(pil_image)
         found_id.save()
