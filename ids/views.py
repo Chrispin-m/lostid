@@ -9,17 +9,14 @@ from .serializers import FoundIDSerializer, MessageSerializer
 from .utils import extract_text_from_image
 from rest_framework.parsers import MultiPartParser, FormParser
 
-# List View: Returns all FoundID objects
 class FoundIDListView(ListAPIView):
     queryset = FoundID.objects.all()
     serializer_class = FoundIDSerializer
 
-
-# Detail View: Returns details of a specific FoundID object
 class FoundIDDetailView(RetrieveAPIView):
     queryset = FoundID.objects.all()
     serializer_class = FoundIDSerializer
-    lookup_field = "id"  # Use `id` (UUIDField) for lookup
+    lookup_field = "id" 
 
 class PostFoundID(APIView):
     def post(self, request):
@@ -29,12 +26,10 @@ class PostFoundID(APIView):
 
         found_id = FoundID.objects.create(image=image)
 
-        # Extract text from the uploaded image (you can implement this function as needed)
         found_id.extracted_text = extract_text_from_image(found_id.image.path)
         found_id.save()
 
-        # Pass the request context to the serializer
-        serializer = FoundIDSerializer(found_id, context={'request': request})  # Pass request context here
+        serializer = FoundIDSerializer(found_id, context={'request': request})
         response_data = serializer.data
         response_data["message_link"] = f"/messages/{found_id.id}/"
 
