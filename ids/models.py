@@ -12,10 +12,10 @@ class FoundID(models.Model):
     posted_at = models.DateTimeField(auto_now_add=True)
 
     def image_url(self):
-        return self.image.url if self.image else None
+        return self.image if self.image else None
 
     def __str__(self):
-        return f"Image - {self.image.url if self.image else 'No Image'}"
+        return f"Image - {self.image if self.image else 'No Image'}"
 
 class Message(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
