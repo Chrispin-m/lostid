@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: lostid
+    env: python
+    buildCommand: ./build.sh
+    startCommand: gunicorn lost_id_recovery.wsgi:application
