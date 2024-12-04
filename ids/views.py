@@ -10,6 +10,7 @@ from .utils import extract_text_from_image
 from rest_framework.parsers import MultiPartParser, FormParser
 from io import BytesIO
 from PIL import Image
+import requests
 
 class FoundIDListView(ListAPIView):
     queryset = FoundID.objects.all()
