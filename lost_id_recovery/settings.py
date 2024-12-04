@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'lost_id_recovery.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
+'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -86,7 +86,24 @@ DATABASES = {
     }
 }
 
+'''
+from urllib.parse import urlparse
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgres://neondb_owner:6qRdVHQjyk1M@ep-nameless-glitter-a1p9id1n-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require')
+url = urlparse(DATABASE_URL)
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': url.path[1:],
+        'USER': url.username,
+        'PASSWORD': url.password,
+        'HOST': url.hostname, 
+        'PORT': url.port or '5432',
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
+    }
+}
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
