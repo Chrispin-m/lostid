@@ -3,19 +3,19 @@ from django.db import models
 from PIL import Image
 import os
 import uuid
+from cloudinary.models import CloudinaryField
 
 class FoundID(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    image = models.ImageField(upload_to='found_ids/')
+    image = CloudinaryField('image')
     extracted_text = models.TextField(blank=True, null=True)
     posted_at = models.DateTimeField(auto_now_add=True)
 
     def image_url(self):
-        # Returns the full URL of the image
         return self.image.url if self.image else None
 
     def __str__(self):
-        return f"Image - {self.image}"
+        return f"Image - {self.image.url if self.image else 'No Image'}"
 
 class Message(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
