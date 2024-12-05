@@ -1,19 +1,28 @@
-from google.cloud import vision
-from PIL import Image
+from paddleocr import PaddleOCR
+from PIL import Image, ImageEnhance, ImageFilter
 
 def extract_text_from_image(image):
-    client = vision.ImageAnnotatorClient()
-
+    # Ensure image is a PIL Image
     if not isinstance(image, Image.Image):
         image = Image.open(image)
+    
+    # Preprocess the image
+    image = image.convert("L")  # Convert to grayscale
+    image = image.filter(ImageFilter.MedianFilter()) 
+    enhancer = ImageEnhance.Contrast(image)
+    image = enhancer.enhance(2)  
 
-    image_bytes = image.tobytes()
+    temp_image_path = "temp_image.png"
+    image.save(temp_image_path)
 
-    content = vision.Image(content=image_bytes)
+    # Initialize PaddleOCR
+    ocr = PaddleOCR(use_angle_cls=True, lang="en")  
 
-    #text detection
-    response = client.text_detection(image=content)
-    text = response.full_text_annotation.text
-    print(text)
+    # Perform OCR
+    result = ocr.ocr(temp_image_path, cls=True)
+    
+    # Extract text
+    extracted_text = "\n".join([line[1][0] for line in result[0]]) 
 
-    return text
+    print(extracted_text)
+    return extracted_text
