@@ -1,8 +1,17 @@
+import tempfile
 from paddleocr import PaddleOCR
 from PIL import Image, ImageEnhance, ImageFilter
+from io import BytesIO
 import os
+import shutil
 
+# Initialize PaddleOCR
 ocr = PaddleOCR(use_angle_cls=True, lang="en")
+
+def clear_paddleocr_cache():
+    cache_dir = os.path.expanduser("~/.paddleocr/")
+    if os.path.exists(cache_dir):
+        shutil.rmtree(cache_dir)
 
 def preprocess_image(image):
     image = image.convert("L")
@@ -10,15 +19,17 @@ def preprocess_image(image):
     enhancer = ImageEnhance.Contrast(image)
     return enhancer.enhance(2)
 
-def extract_text_from_image(image_path):
-    if not os.path.exists(image_path):
-        raise FileNotFoundError(f"Image not found at {image_path}")
+def extract_text_from_image(image):
+    if not isinstance(image, Image.Image):
+        raise ValueError("The input should be a PIL.Image object")
 
-    with Image.open(image_path) as img:
-        processed_image = preprocess_image(img)
+    clear_paddleocr_cache()
 
-    temp_image_path = "temp_image.png"
-    processed_image.save(temp_image_path)
+    # Save the processed image to a temporary file
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_image_file:
+        temp_image_path = temp_image_file.name
+        processed_image = preprocess_image(image)
+        processed_image.save(temp_image_path)
 
     try:
         result = ocr.ocr(temp_image_path, cls=True)
@@ -31,4 +42,4 @@ def extract_text_from_image(image_path):
     finally:
         if os.path.exists(temp_image_path):
             os.remove(temp_image_path)
-
+        clear_paddleocr_cache()
