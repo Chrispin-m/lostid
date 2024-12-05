@@ -1,28 +1,34 @@
 from paddleocr import PaddleOCR
 from PIL import Image, ImageEnhance, ImageFilter
+import os
 
-def extract_text_from_image(image):
-    # Ensure image is a PIL Image
-    if not isinstance(image, Image.Image):
-        image = Image.open(image)
-    
-    # Preprocess the image
-    image = image.convert("L")  # Convert to grayscale
-    image = image.filter(ImageFilter.MedianFilter()) 
+ocr = PaddleOCR(use_angle_cls=True, lang="en")
+
+def preprocess_image(image):
+    image = image.convert("L")
+    image = image.filter(ImageFilter.MedianFilter())
     enhancer = ImageEnhance.Contrast(image)
-    image = enhancer.enhance(2)  
+    return enhancer.enhance(2)
+
+def extract_text_from_image(image_path):
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"Image not found at {image_path}")
+
+    with Image.open(image_path) as img:
+        processed_image = preprocess_image(img)
 
     temp_image_path = "temp_image.png"
-    image.save(temp_image_path)
+    processed_image.save(temp_image_path)
 
-    # Initialize PaddleOCR
-    ocr = PaddleOCR(use_angle_cls=True, lang="en")  
+    try:
+        result = ocr.ocr(temp_image_path, cls=True)
+        extracted_text = "\n".join([line[1][0] for line in result[0]])
+        print(extracted_text)
+        return extracted_text
+    except Exception as e:
+        print(f"Error during OCR: {e}")
+        return ""
+    finally:
+        if os.path.exists(temp_image_path):
+            os.remove(temp_image_path)
 
-    # Perform OCR
-    result = ocr.ocr(temp_image_path, cls=True)
-    
-    # Extract text
-    extracted_text = "\n".join([line[1][0] for line in result[0]]) 
-
-    print(extracted_text)
-    return extracted_text
