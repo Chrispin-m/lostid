@@ -16,8 +16,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-if not GOOGLE_APPLICATION_CREDENTIALS or not os.path.exists(GOOGLE_APPLICATION_CREDENTIALS):
-    raise ValueError("The Google Cloud credentials file is missing or the path is invalid.")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 #MEDIA_URL = '/media/'
