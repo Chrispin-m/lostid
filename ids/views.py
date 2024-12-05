@@ -6,7 +6,6 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from django.shortcuts import get_object_or_404
 from .models import FoundID, Message
 from .serializers import FoundIDSerializer, MessageSerializer
-from .utils import extract_text_from_image
 from rest_framework.parsers import MultiPartParser, FormParser
 from io import BytesIO
 from PIL import Image
@@ -24,33 +23,25 @@ class FoundIDDetailView(RetrieveAPIView):
 class PostFoundID(APIView):
     def post(self, request):
         image = request.FILES.get('image')
+        extracted_text = request.data.get('extracted_text') 
+
         if not image:
             return Response({"error": "Image file is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not extracted_text:
+            return Response({"error": "Extracted text is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        found_id = FoundID.objects.create(image=image)
+        found_id = FoundID.objects.create(
+            image=image,
+            extracted_text=extracted_text
+        )
 
-        image_url = found_id.image_absolute_url
-        print(image_url)
-
-        response = requests.get(image_url)
-        if response.status_code != 200:
-            return Response({"error": "Failed to fetch the image from Cloudinary"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if response.status_code == 200 and "image" in response.headers.get("Content-Type", ""):
-            image_file = BytesIO(response.content)
-            image_file.seek(0) 
-            pil_image = Image.open(image_file)
-        else:
-            return Response({"error": "Invalid image content from Cloudinary"}, status=status.HTTP_400_BAD_REQUEST)
-
-        found_id.extracted_text = extract_text_from_image(pil_image)
-        found_id.save()
-
+     
         serializer = FoundIDSerializer(found_id, context={'request': request})
         response_data = serializer.data
         response_data["message_link"] = f"/messages/{found_id.id}/"
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
 class SearchLostID(APIView):
     def get(self, request):
         query = request.query_params.get('q', '')
